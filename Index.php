@@ -803,49 +803,47 @@ function saveTemplate() {
         }
 
         function saveTemplate() {
-    if (!activeLeaveAction) {
-        showStatus("Please select a leave action first", "warning");
-        return;
-    }
+            if (!activeLeaveAction) {
+                showStatus("Please select a leave action first", "warning");
+                return;
+            }
 
-    var templateData = {
-        action: activeLeaveAction,
-        to: $("#email").val(),
-        cc: $("#cc").val(),
-        bcc: $("#bcc").val(),
-        sender_name: $("#senderName").val(),
-        smtp_username: $("#smtpUsername").val(),
-        smtp_password: $("#smtpPassword").val(),
-        subject: $("#subject").val(),
-        message: $('#editor').summernote('code')
-    };
-    
-    $.ajax({
-        type: "POST",
-        url: "",
-        data: {
-            action: 'save_template',
-            leave_action: activeLeaveAction,
-            email: templateData.to,
-            cc: templateData.cc,
-            bcc: templateData.bcc,
-            sender_name: templateData.sender_name,
-            smtp_username: templateData.smtp_username,
-            smtp_password: templateData.smtp_password,
-            subject: templateData.subject,
-            message: templateData.message
-        },
-        success: function(response) {
-            var result = JSON.parse(response);
-            showStatus(result.message, result.status);
-        },
-        error: function(xhr, status, error) {
-            showStatus("Error saving template: " + error, "danger");
+            var templateData = {
+                action: activeLeaveAction,
+                to: $("#email").val(),
+                cc: $("#cc").val(),
+                bcc: $("#bcc").val(),
+                sender_name: $("#senderName").val(),
+                smtp_username: $("#smtpUsername").val(),
+                smtp_password: $("#smtpPassword").val(),
+                subject: $("#subject").val(),
+                message: $('#editor').summernote('code')
+            };
+            
+            $.ajax({
+                type: "POST",
+                url: "",
+                data: {
+                    action: 'save_template',
+                    leave_action: activeLeaveAction,
+                    email: templateData.to,
+                    cc: templateData.cc,
+                    bcc: templateData.bcc,
+                    sender_name: templateData.sender_name,
+                    smtp_username: templateData.smtp_username,
+                    smtp_password: templateData.smtp_password,
+                    subject: templateData.subject,
+                    message: templateData.message
+                },
+                success: function(response) {
+                    var result = JSON.parse(response);
+                    showStatus(result.message, result.status);
+                },
+                error: function(xhr, status, error) {
+                    showStatus("Error saving template: " + error, "danger");
+                }
+            });
         }
-    });
-}
-
-
 
         function loadEmailData() {
             // This would be replaced with your PHP implementation
@@ -913,24 +911,12 @@ function saveTemplate() {
         }
 
         function sendTestEmail() {
-            $('#testEmailModal').modal('show');
-        }
-
-        function confirmSendTestEmail() {
-            var testEmail = $("#testEmailAddress").val();
-            if (!testEmail) {
-                alert("Please enter a valid email address for the test email.");
-                return;
-            }
-            
             var smtpUsername = $("#smtpUsername").val();
             var smtpPassword = $("#smtpPassword").val();
             var senderName = $("#senderName").val();
             var subject = $("#subject").val();
             var content = $('#editor').summernote('code');
             var to = $("#email").val();
-            var cc = $("#cc").val();
-            var bcc = $("#bcc").val();
             
             if (!smtpUsername || !smtpPassword) {
                 alert("⚠️ Please fill in SMTP Username and Password before sending a test email.");
@@ -942,7 +928,14 @@ function saveTemplate() {
                 return;
             }
             
-            $("#testEmailModal").modal('hide');
+            if (!to) {
+                alert("⚠️ Please fill in the recipient email address before sending a test email.");
+                return;
+            }
+            
+            // Use the first email in the "To" field as the test recipient
+            var testEmail = to.split(/,\s*/)[0];
+            
             $("#status").html('<div class="alert alert-info">Sending test email... Please wait.</div>');
             $("#testButton").prop('disabled', true);
             
@@ -958,21 +951,21 @@ function saveTemplate() {
                     subject: subject,
                     message: content,
                     email: to,
-                    cc: cc,
-                    bcc: bcc,
+                    cc: $("#cc").val(),
+                    bcc: $("#bcc").val(),
                     leave_action: activeLeaveAction
                 },
                 success: function(response) {
                     var result = JSON.parse(response);
                     if (result.status === 'success') {
-                        $("#status").html('<div class="alert alert-success">Test email sent successfully to ' + testEmail + '</div>');
+                        showStatus("Test email sent successfully to " + testEmail, "success");
                     } else {
-                        $("#status").html('<div class="alert alert-danger">❌ Error sending test email: ' + result.message + '</div>');
+                        showStatus("❌ Error sending test email: " + result.message, "danger");
                     }
                     $("#testButton").prop('disabled', false);
                 },
                 error: function(xhr, status, error) {
-                    $("#status").html('<div class="alert alert-danger">❌ Error sending test email: ' + error + '</div>');
+                    showStatus("❌ Error sending test email: " + error, "danger");
                     $("#testButton").prop('disabled', false);
                 }
             });
@@ -1004,4 +997,3 @@ function saveTemplate() {
     </script>
 </body>
 </html>
-
